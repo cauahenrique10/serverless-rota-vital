@@ -21,6 +21,23 @@ class LambdaHandler(BaseHTTPRequestHandler):
         body_bytes = self.rfile.read(content_length)
         body_str = body_bytes.decode("utf-8")
 
+        # Sanitize unquoted JSON if PowerShell stripped quotes
+        try:
+            json.loads(body_str or "{}")
+        except:
+            import re
+            s = body_str.replace("\\", "")
+            s = re.sub(r'([a-zA-Z0-9_]+)\s*:', r'"\1":', s)
+            def _fix_val(m):
+                v = m.group(1).strip()
+                if v in ("true", "false", "null") or v.isdigit():
+                    return f": {v}"
+                if v.startswith('"') and v.endswith('"'):
+                    return f": {v}"
+                return f': "{v}"'
+            s = re.sub(r':\s*([a-zA-Z0-9_\-]+)', _fix_val, s)
+            body_str = s
+
         event = {
             "resource": "/guias",
             "path": "/guias",
@@ -46,14 +63,15 @@ class LambdaHandler(BaseHTTPRequestHandler):
             if not WARM:
                 importlib.reload(app)
             
-            # Check timeout simulation
+            # Check timeout simulation (read dynamically from template.yaml)
+            cur_timeout = get_timeout_from_template()
             pedido = json.loads(body_str or "{}")
-            if pedido.get("demorar") and TIMEOUT < 5:
-                # Function sleeps 5, but timeout is reached at TIMEOUT seconds
-                time.sleep(TIMEOUT)
+            if pedido.get("demorar") and cur_timeout < 5:
+                # Function sleeps 5, but timeout is reached at cur_timeout seconds
+                time.sleep(cur_timeout)
                 elapsed = time.time() - start_time
-                print(f"Function 'GuiaFunction' timed out after {TIMEOUT:.2f} seconds")
-                print(f"REPORT Duration: {TIMEOUT*1000:.2f} ms Billed Duration: {int(TIMEOUT*1000)} ms Memory Size: 128 MB")
+                print(f"Function 'GuiaFunction' timed out after {cur_timeout:.2f} seconds")
+                print(f"REPORT Duration: {cur_timeout*1000:.2f} ms Billed Duration: {int(cur_timeout*1000)} ms Memory Size: 128 MB")
                 self.send_response(502)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()

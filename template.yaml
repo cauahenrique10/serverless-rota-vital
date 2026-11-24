@@ -4,7 +4,7 @@ Description: Atividade individual 1 - Serverless (guia de transporte do Rota Vit
 
 Globals:
   Function:
-    Timeout: 3   # depois do Passo 5, trocar para 10
+    Timeout: 10 # depois do Passo 5, trocar para 10
 
 Resources:
   GuiaFunction:
