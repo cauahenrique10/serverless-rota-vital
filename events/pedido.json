@@ -1,0 +1,1 @@
+{"body": "{\"requisicaoId\":\"R-001\",\"hospital\":\"H-Recife\",\"bolsas\":[\"O-NEG-0142\"]}", "resource": "/{proxy+}", "path": "/guias", "httpMethod": "POST", "isBase64Encoded": false, "queryStringParameters": null, "pathParameters": {"proxy": "guias"}, "headers": {"Content-Type": "application/json"}, "requestContext": {"httpMethod": "POST", "path": "/guias"}}
